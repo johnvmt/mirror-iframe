@@ -1,0 +1,26 @@
+{
+  "name": "mirror-iframe",
+  "description": "A web component that emits interactions with an iframe",
+  "authors": [
+    { "name": "John Murphy-Teixidor", "email": "johnvmt@gmail.com" }
+  ],
+  "license": "MIT",
+  "main": "mirror-iframe.html",
+  "dependencies": {
+    "eventEmitter": "5.1.x"
+  },
+  "devDependencies": {
+
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/johnvmt/mirror-iframe.git"
+  },
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "name": "mirror-iframe",
+  "version": "0.0.1",
+  "description": "A web component that emits interactions with an iframe",
+  "private": true,
+  "author": {
+    "name": "John Murphy-Teixidor",
+    "email": "johnvmt@gmail.com"
+  },
+  "devDependencies": {
+  },
+  "dependencies": {
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/johnvmt/transparency-drawing.git"
+  },
+  "scripts": {
+    "postinstall": "bower install"
+  }
+}

@@ -1,0 +1,161 @@
+<template>
+	<style></style>
+	<div style="display: block; background-color: #00ff00; width: 100%; height: 100%;">
+		<iframe scrolling="no" style="width: 1px; min-width: 100%; height: 100%; display:block; border: 0; padding: 0; margin: 0;"></iframe>
+	</div>
+</template>
+
+<!-- Event Emitter. Installed by Bower. Remove if not needed -->
+<!--<script type="text/javascript" src="../eventEmitter/EventEmitter.min.js"></script>-->
+<script type="text/javascript" src="bower_components/eventEmitter/EventEmitter.min.js"></script>
+
+<script>
+	(function(window, document) {
+		// Create references to this file and directory
+		var componentDoc =  (document._currentScript || document.currentScript).ownerDocument;
+		var componentDir = componentDoc.baseURI.substring(0, componentDoc.baseURI.lastIndexOf('/'));
+		var componentFile = componentDoc.baseURI.substring(componentDoc.baseURI.lastIndexOf('/') + 1);
+		var componentName = componentFile.substring(0, componentFile.lastIndexOf('.'));
+
+		// Gets content from <template>
+		var template = componentDoc.querySelector('template').content;
+
+		// Set default element attributes
+		var elementAttributesDefault = {};
+
+		// Object constructor (but most should go into createdCalledback)
+		function Element() {}
+
+		// Inherits from HTMLElement
+		Element.prototype = Object.create(HTMLElement.prototype);
+
+		// Add EventEmitter; Remove if not needed
+		for(var key in EventEmitter.prototype) {
+			Element.prototype[key] = EventEmitter.prototype[key];
+		}
+
+		Element.prototype.emitMirror = function(functionName, functionArgs) {
+			this.emit.apply(this, ['mirror', functionName].concat(Array.prototype.slice.call(functionArgs)));
+		};
+
+		// Fires when an instance of the element is created
+		Element.prototype.createdCallback = function() {
+			var thisElem = this;
+
+			thisElem.emitEvents = true;
+
+			// Creates the shadow root
+			thisElem.shadowRoot = this.createShadowRoot();
+
+			// Adds a template clone into shadow root
+			thisElem.shadowRoot.appendChild(document.importNode(template, true));
+
+			// get and merge params from bullet-point element
+			thisElem.elementAttributes = objectExtend(elementAttributesDefault, thisElem.getAttributes());
+
+			// Triggered when the window is resized
+			window.addEventListener('resize', function() {
+
+			});
+
+			thisElem._elements = {
+				iframe: thisElem.shadowRoot.querySelector('iframe')
+			};
+
+			thisElem._elements.iframe.setAttribute('src', thisElem.elementAttributes.src);
+
+			thisElem._elements.iframe.onload = function() {
+				thisElem._elements.iframeWindow = thisElem._elements.iframe.contentWindow;
+			};
+
+			window.addEventListener('message', function(messageEvent) {
+				if(thisElem.emitEvents) {
+					if(thisElem._elements.iframeWindow == messageEvent.source) {
+						if(typeof messageEvent.data.type == 'string') {
+							thisElem.emitMirror('triggerEvent', [messageEvent.data])
+						}
+
+					}
+				}
+
+			});
+		};
+
+		Element.prototype.triggerEvent = function(event) {
+			this.emitEvents = false;
+
+			var iframeBox = this._elements.iframe.getBoundingClientRect();
+			//event.clientX = (event.pagePercentageX * iframeBox.width) + iframeBox.left;
+			//event.clientY = (event.pagePercentageY * iframeBox.height) + iframeBox.top;
+
+
+			this._elements.iframeWindow.postMessage(event, '*');
+			this.emitEvents = true;
+		};
+
+		// Called when an attribute of this element is added, removed, or updated
+		Element.prototype.attributeChangedCallback = function(attr, oldVal, newVal) {
+			if(attr == 'src')
+				this._elements.iframe.setAttribute('src', newVal);
+		};
+
+		Element.prototype.elementOffset = function(elem) {
+			var offsetLeft = 0;
+			var offsetTop = 0;
+			do {
+				if(!isNaN(elem.offsetLeft))
+					offsetLeft += elem.offsetLeft;
+				if(!isNaN(elem.offsetTop))
+					offsetTop += elem.offsetTop;
+			} while(elem = elem.offsetParent);
+			return [offsetLeft, offsetTop];
+		};
+
+		/* Component utility Functions */
+		// Get all attributes of element
+		Element.prototype.getAttributes = function(target) {
+			if(typeof target === 'undefined')
+				target = this;
+
+			var attributes = {};
+			for(var ctr = 0; ctr < target.attributes.length; ctr++) {
+				attributes[target.attributes[ctr].nodeName] = target.attributes[ctr].nodeValue;
+			}
+			return attributes;
+		};
+
+		Element.prototype.getAttribute = function(attributeName, target) {
+			if(typeof target === 'undefined')
+				target = this;
+
+			for(var ctr = 0; ctr < target.attributes.length; ctr++) {
+				if(target.attributes[ctr].nodeName === attributeName)
+					return target.attributes[ctr].nodeValue;
+			}
+			return undefined;
+		};
+
+		// Return sum of all objects passed as new object, with later arguments overwriting
+		function objectExtend() {
+			var merged = {};
+			objectForEach(arguments, function(argument) {
+				for (var attrname in argument) {
+					if(argument.hasOwnProperty(attrname))
+						merged[attrname] = argument[attrname];
+				}
+			});
+			return merged;
+
+		}
+
+		function objectForEach(object, callback) {
+			// run function on each property (child) of object
+			for(var property in object) { // pull keys before looping through?
+				if (object.hasOwnProperty(property))
+					callback(object[property], property, object);
+			}
+		}
+
+		document.registerElement(componentName, Element);
+	})(window, document);
+</script>

@@ -6,9 +6,7 @@
   ],
   "license": "MIT",
   "main": "mirror-iframe.html",
-  "dependencies": {
-    "eventEmitter": "5.1.x"
-  },
+  "dependencies": {},
   "devDependencies": {
 
   },

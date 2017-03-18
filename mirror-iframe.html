@@ -5,10 +5,6 @@
 	</div>
 </template>
 
-<!-- Event Emitter. Installed by Bower. Remove if not needed -->
-<!--<script type="text/javascript" src="../eventEmitter/EventEmitter.min.js"></script>-->
-<script type="text/javascript" src="../eventEmitter/EventEmitter.min.js"></script>
-
 <script>
 	(function(window, document) {
 		// Create references to this file and directory
@@ -29,13 +25,10 @@
 		// Inherits from HTMLElement
 		Element.prototype = Object.create(HTMLElement.prototype);
 
-		// Add EventEmitter; Remove if not needed
-		for(var key in EventEmitter.prototype) {
-			Element.prototype[key] = EventEmitter.prototype[key];
-		}
-
 		Element.prototype.emitMirror = function(functionName, functionArgs) {
-			this.emit.apply(this, ['mirror', functionName].concat(Array.prototype.slice.call(functionArgs)));
+			var event = document.createEvent('CustomEvent');
+			event.initCustomEvent('mirror', true, true, [functionName].concat(Array.prototype.slice.call(functionArgs)));
+			this.dispatchEvent(event);
 		};
 
 		// Fires when an instance of the element is created

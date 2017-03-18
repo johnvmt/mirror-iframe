@@ -26,9 +26,9 @@
 		Element.prototype = Object.create(HTMLElement.prototype);
 
 		Element.prototype.emitMirror = function(functionName, functionArgs) {
-			var event = document.createEvent('CustomEvent');
-			event.initCustomEvent('mirror', true, true, [functionName].concat(Array.prototype.slice.call(functionArgs)));
-			this.dispatchEvent(event);
+			var emitEvent = document.createEvent('CustomEvent');
+			emitEvent.initCustomEvent('mirror', true, true, [functionName].concat(Array.prototype.slice.call(functionArgs)));
+			this.dispatchEvent(emitEvent);
 		};
 
 		// Fires when an instance of the element is created

@@ -1,38 +1,43 @@
 (function() {
 	if(parent != window) { // Only apply on iframes
-		var lastEvent = null;
+		var lastEventPosted = null;
+		var lastEventDispatched = null;
+		var lastEventDispatchedTag = null;
 		var validEventTypes = ['click', 'mouseup', 'mousedown', 'mousemove'];
 
 		window.onload = function() {
 			document.querySelector('body').onclick = function(event) {
-				if(event != lastEvent)
+				if(event != lastEventPosted)
 					postEvent(event);
-				lastEvent = event;
+				lastEventPosted = event;
 			}
 		};
 
 		window.addEventListener('message', function(messageEvent) {
-			var sourceEvent = messageEvent.data;
+			var sourceEvent = messageEvent.data.event;
 
 			if(typeof sourceEvent.targetPath == 'string') {
 				var target = document.querySelector(sourceEvent.targetPath);
 
+				var generatedEvent = {
+					bubbles: true,
+					cancelable: true,
+					view: window
+				};
+
 				if(typeof sourceEvent.clientPercentageX != 'undefined')
-					sourceEvent.clientX = sourceEvent.clientPercentageX * window.innerWidth;
+					generatedEvent.clientX = sourceEvent.clientPercentageX * window.innerWidth;
 
 				if(typeof sourceEvent.clientPercentageY != 'undefined')
-					sourceEvent.clientY = sourceEvent.clientPercentageY * window.innerHeight;
+					generatedEvent.clientY = sourceEvent.clientPercentageY * window.innerHeight;
+
+				generatedEvent = objectMerge(sourceEvent, generatedEvent);
 
 				if(target != null && typeof sourceEvent.type == 'string' && validEventTypes.indexOf(sourceEvent.type) >= 0) {
-					var event = new MouseEvent(sourceEvent.type, {
-						bubbles: true,
-						cancelable: true,
-						view: window,
-						screenX: sourceEvent.screenX,
-						screenY: sourceEvent.screenY,
-						clientX: sourceEvent.clientX,
-						clientY: sourceEvent.clientY
-					});
+					var event = new MouseEvent(sourceEvent.type, generatedEvent);
+
+					lastEventDispatchedTag = messageEvent.data.tag; // Get tags passed through
+					lastEventDispatched = event;
 
 					target.dispatchEvent(event);
 				}
@@ -43,27 +48,29 @@
 		var defaultAddEventListener = EventTarget.prototype.addEventListener;
 		EventTarget.prototype.addEventListener = function(eventName, eventHandler) {
 			defaultAddEventListener.call(this, eventName, function(event) {
-				if(lastEvent != event && validEventTypes.indexOf(event.type) >= 0) // In an iframe and valid even type to emit
-					postEvent(event);
-				lastEvent = event;
+				if(lastEventPosted != event && validEventTypes.indexOf(event.type) >= 0)// In an iframe and valid even type to emit
+					postEventParent(event);
+				lastEventPosted = event;
 				eventHandler(event);
 			});
 		};
 
-		function postEvent(event) {
-			var postMessage = {};
+		function postEventParent(event) {
+			var postEvent = {};
+			var postTag = (event == lastEventDispatched) ? lastEventDispatchedTag : undefined;
+
 			var property;
 			for(property in event) {
 				if(property[0] == property[0].toLowerCase() && ['boolean', 'number', 'string'].indexOf(typeof event[property]) >= 0)
-					postMessage[property] = event[property];
+					postEvent[property] = event[property];
 			}
 
 			// Add X, Y percentages for use when mirroing events to differently-sized element
-			postMessage.clientPercentageX = event.clientX / window.innerWidth;
-			postMessage.clientPercentageY = event.clientY / window.innerHeight;
-			postMessage.targetPath = getDomPath(event.target);
+			postEvent.clientPercentageX = event.clientX / window.innerWidth;
+			postEvent.clientPercentageY = event.clientY / window.innerHeight;
+			postEvent.targetPath = getDomPath(event.target);
 
-			parent.postMessage(postMessage, '*');
+			parent.postMessage({event: postEvent, tag: postTag}, '*');
 		}
 
 		function getDomPath(element) {
@@ -72,7 +79,6 @@
 			var stack = [];
 			var isShadow = false;
 			while (element.parentNode != null) {
-				// console.log(el.nodeName);
 				var sibCount = 0;
 				var sibIndex = 0;
 				// get sibling indexes
@@ -102,6 +108,26 @@
 			}
 			stack.splice(0,1); // removes the html element
 			return stack.join(' > ');
+		}
+
+		function objectMerge() {
+			var merged = {};
+			objectForEach(arguments, function(argument) {
+				for (var attrname in argument) {
+					if(argument.hasOwnProperty(attrname))
+						merged[attrname] = argument[attrname];
+				}
+			});
+			return merged;
+		}
+
+		function objectForEach (object, callback) {
+			// run function on each property (child) of object
+			var property;
+			for(property in object) { // pull keys before looping through?
+				if (object.hasOwnProperty(property))
+					callback(object[property], property, object);
+			}
 		}
 	}
 })();

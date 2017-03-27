@@ -25,9 +25,16 @@
 		// Inherits from HTMLElement
 		Element.prototype = Object.create(HTMLElement.prototype);
 
-		Element.prototype.emitMirror = function(functionName, functionArgs) {
+		Element.prototype.emitMirror = function(mirrorTag, functionName, functionArgs) {
+			if(typeof functionArgs == 'undefined')
+				functionArgs = [];
+
+			var emitMirrorDetail = {function: functionName, arguments: Array.prototype.slice.call(functionArgs)};
+			if(typeof mirrorTag != 'undefined')
+				emitMirrorDetail.tag = mirrorTag;
+
 			var emitEvent = document.createEvent('CustomEvent');
-			emitEvent.initCustomEvent('mirror', true, true, [functionName].concat(Array.prototype.slice.call(functionArgs)));
+			emitEvent.initCustomEvent('mirror', true, true, emitMirrorDetail);
 			this.dispatchEvent(emitEvent);
 		};
 
@@ -64,25 +71,20 @@
 			window.addEventListener('message', function(messageEvent) {
 				if(thisElem.emitEvents) {
 					if(thisElem._elements.iframeWindow == messageEvent.source) {
-						if(typeof messageEvent.data.type == 'string') {
-							thisElem.emitMirror('triggerEvent', [messageEvent.data])
+						if(typeof messageEvent.data.event.type == 'string') {
+							thisElem.emitMirror(messageEvent.data.tag, 'triggerEvent', [messageEvent.data.event])
 						}
-
 					}
 				}
-
 			});
 		};
 
-		Element.prototype.triggerEvent = function(event) {
+		Element.prototype.triggerEvent = function(event, mirrorTag) {
 			this.emitEvents = false;
-
-			var iframeBox = this._elements.iframe.getBoundingClientRect();
+			//var iframeBox = this._elements.iframe.getBoundingClientRect();
 			//event.clientX = (event.pagePercentageX * iframeBox.width) + iframeBox.left;
 			//event.clientY = (event.pagePercentageY * iframeBox.height) + iframeBox.top;
-
-
-			this._elements.iframeWindow.postMessage(event, '*');
+			this._elements.iframeWindow.postMessage({event: event, tag: mirrorTag}, '*');
 			this.emitEvents = true;
 		};
 

@@ -1,5 +1,6 @@
 {
   "name": "mirror-iframe",
+  "version": "1.0.0",
   "description": "A web component that emits interactions with an iframe",
   "authors": [
     { "name": "John Murphy-Teixidor", "email": "johnvmt@gmail.com" }

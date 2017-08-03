@@ -1,4 +1,4 @@
-<template>
+<template is="mirror-iframe">
 	<style>
 		:host {
 			display: block;
@@ -28,7 +28,7 @@
 
 				// Gets content from <template>
 				let shadow = this.attachShadow({mode: 'open'});
-				let template = componentDoc.querySelector('template').content;
+				let template = componentDoc.querySelector('template[is=mirror-iframe]').content;
 				shadow.appendChild(document.importNode(template, true));
 
 				thisElem._elements = {};

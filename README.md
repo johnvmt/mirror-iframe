@@ -13,6 +13,8 @@ A web component that emits interactions with an iframe
 
 ## Usage ##
 
+	You must include mirrorevents.js in the page whose evnts you want to mirror
+
 	<!DOCTYPE html>
 	<html>
 	<head>
@@ -25,13 +27,22 @@ A web component that emits interactions with an iframe
 	
 	</head>
 	<body>
-		<div style="width: 500px; height: 500px; display: block; background-color: #00ff00">
-			<mirror-iframe src="my-page.html"></mirror-iframe>
+		SOURCE
+		<div style="width: 500px; height: 300px; display: block; background-color: #00ff00">
+			<mirror-iframe id="mirrorsrc" src="my-page.html"></mirror-iframe>
+		</div>
+		<br />
+		SINK
+		<div style="width: 500px; height: 300px; display: block; background-color: #00ff00">
+			<mirror-iframe id="mirrorsink" src="my-page.html"></mirror-iframe>
 		</div>
 		<script>
-			var mirrorIframe = document.querySelector('mirror-iframe');
-			mirrorIframe.addEventListener('mirror', function(event) {
-				console.log(event);
+			var mirrorSrc = document.querySelector('#mirrorsrc');
+			var mirrorSink = document.querySelector('#mirrorsink');
+
+			mirrorSrc.addEventListener('mirror', function(event) {
+				let capturedEvent = event.detail;
+				mirrorSink[capturedEvent.function].apply(mirrorSink, capturedEvent.arguments);
 			});
 		</script>
 	</body>

@@ -3,21 +3,17 @@
 		var lastEventPosted = null;
 		var lastEventDispatched = null;
 		var lastEventDispatchedTag = null;
-		var validEventTypes = ['click', 'mouseup', 'mousedown', 'mousemove'];
-
-		window.onload = function() {
-			document.querySelector('body').onclick = function(event) {
-				if(event != lastEventPosted)
-					postEvent(event);
-				lastEventPosted = event;
-			}
+		var validEventTypes = {
+			mouse: ['click', 'mouseup', 'mousedown', 'mousemove'],
+			keyboard: ['keydown', 'keyup', 'keypress']
 		};
 
 		window.addEventListener('message', function(messageEvent) {
 			var sourceEvent = messageEvent.data.event;
+			var sourceEventType = eventType(sourceEvent.type);
 
-			if(typeof sourceEvent.targetPath == 'string') {
-				var target = document.querySelector(sourceEvent.targetPath);
+			if(typeof sourceEventType == 'string' && typeof sourceEvent.targetPath == 'string') { // Event will be triggered
+				var eventTarget = document.querySelector(sourceEvent.targetPath);
 
 				var generatedEvent = {
 					bubbles: true,
@@ -33,44 +29,78 @@
 
 				generatedEvent = objectMerge(sourceEvent, generatedEvent);
 
-				if(target != null && typeof sourceEvent.type == 'string' && validEventTypes.indexOf(sourceEvent.type) >= 0) {
-					var event = new MouseEvent(sourceEvent.type, generatedEvent);
-
-					lastEventDispatchedTag = messageEvent.data.tag; // Get tags passed through
-					lastEventDispatched = event;
-
-					target.dispatchEvent(event);
+				var event;
+				switch(sourceEventType) {
+					case 'mouse':
+						event = new MouseEvent(sourceEvent.type, generatedEvent);
+						break;
+					case 'keyboard':
+						event = new KeyboardEvent(sourceEvent.type, generatedEvent);
+						break;
+					default:
+						return;
+						break;
 				}
+
+				lastEventDispatchedTag = messageEvent.data.tag; // Get tags passed through
+				lastEventDispatched = event;
+
+				eventTarget.dispatchEvent(event);
 			}
 		});
 
 		// Override event listener
 		var defaultAddEventListener = EventTarget.prototype.addEventListener;
 		EventTarget.prototype.addEventListener = function(eventName, eventHandler) {
-			defaultAddEventListener.call(this, eventName, function(event) {
-				if(lastEventPosted != event && validEventTypes.indexOf(event.type) >= 0)// In an iframe and valid even type to emit
+
+			if(validEventName(eventName)) { // capture this event
+				var eventElement = this;
+				defaultAddEventListener.call(eventElement, eventName, function(event) {
 					postEventParent(event);
-				lastEventPosted = event;
-				eventHandler(event);
-			});
+					eventHandler.apply(eventElement, Array.prototype.slice.call(arguments));
+				});
+			}
+			else // do not capture this event
+				defaultAddEventListener.call(this, eventName, eventHandler);
 		};
 
 		function postEventParent(event) {
-			var postEvent = {};
-			var postTag = (event == lastEventDispatched) ? lastEventDispatchedTag : undefined;
+			if(lastEventPosted != event) {
+				lastEventPosted = event;
 
-			var property;
-			for(property in event) {
-				if(property[0] == property[0].toLowerCase() && ['boolean', 'number', 'string'].indexOf(typeof event[property]) >= 0)
-					postEvent[property] = event[property];
+				var postEvent = {};
+
+				var property;
+				for(property in event) {
+					if(['boolean', 'number', 'string'].indexOf(typeof event[property]) >= 0)
+						postEvent[property] = event[property];
+				}
+
+				// Add X, Y percentages for use when mirroing events to differently-sized element
+				if(event.clientX !== undefined)
+					postEvent.clientPercentageX = event.clientX / window.innerWidth;
+				if(event.clientY !== undefined)
+					postEvent.clientPercentageY = event.clientY / window.innerHeight;
+
+				postEvent.targetPath = getDomPath(event.target);
+
+				var postTag = (event == lastEventDispatched) ? lastEventDispatchedTag : undefined;
+
+				parent.postMessage({event: postEvent, tag: postTag}, '*');
 			}
+		}
 
-			// Add X, Y percentages for use when mirroing events to differently-sized element
-			postEvent.clientPercentageX = event.clientX / window.innerWidth;
-			postEvent.clientPercentageY = event.clientY / window.innerHeight;
-			postEvent.targetPath = getDomPath(event.target);
+		function validEventName(eventName) {
+			return eventType(eventName) !== undefined;
+		}
 
-			parent.postMessage({event: postEvent, tag: postTag}, '*');
+		// Returns mouse, keyboard or undefined
+		function eventType(eventName) {
+			var property;
+			for(property in validEventTypes) {
+				if(validEventTypes[property].indexOf(eventName) >= 0)
+					return property;
+			}
 		}
 
 		function getDomPath(element) {
@@ -95,18 +125,17 @@
 					nodeName += "::shadow";
 					isShadow = false;
 				}
-				if ( sibCount > 1 ) {
+				if(sibCount > 1)
 					stack.unshift(nodeName + ':nth-of-type(' + (sibIndex + 1) + ')');
-				} else {
+				else
 					stack.unshift(nodeName);
-				}
 				element = element.parentNode;
-				if (element.nodeType === 11) { // for shadow dom, we
+				if (element.nodeType === 11) {
 					isShadow = true;
 					element = element.host;
 				}
 			}
-			stack.splice(0,1); // removes the html element
+			stack.splice(0, 1); // removes the html element
 			return stack.join(' > ');
 		}
 

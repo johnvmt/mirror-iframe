@@ -1,6 +1,6 @@
 {
   "name": "mirror-iframe",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A web component that emits interactions with an iframe",
   "private": true,
   "author": {

@@ -52,6 +52,10 @@
 				thisElem._elements.iframe.setAttribute('src', this.getAttribute('src'));
 			}
 
+			static get observedAttributes() {
+				return ['src'];
+			}
+
 			attributeChangedCallback(attr, oldVal, newVal) {
 				if(attr == 'src')
 					this._elements.iframe.setAttribute('src', newVal);

@@ -1,6 +1,6 @@
 {
   "name": "mirror-iframe",
-  "version": "1.0.4",
+  "version": "1.1.0",
   "description": "A web component that emits interactions with an iframe",
   "private": true,
   "author": {
@@ -14,8 +14,5 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/johnvmt/mirror-iframe.git"
-  },
-  "scripts": {
-    "postinstall": "bower install"
   }
 }

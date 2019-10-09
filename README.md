@@ -1,16 +1,6 @@
 # Mirror-Iframe #
 A web component that emits interactions with an iframe
 
-## Installation ##
-
-### Bower ###
-	
-	bower install
-
-### Node ###
-
-	npm install
-
 ## Usage ##
 
 	You must include mirrorevents.js in the page whose evnts you want to mirror
@@ -20,10 +10,7 @@ A web component that emits interactions with an iframe
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 	
-		<!-- Polyfill -->
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/webcomponentsjs/1.0.4/webcomponents-lite.js"></script>
-
-		<link rel="import" href="mirror-iframe.html">
+		<script type="module" src="mirror-iframe.js"></script>
 	
 	</head>
 	<body>

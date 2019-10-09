@@ -3,7 +3,7 @@
 		let lastEventPosted = null;
 		let lastEventDispatched = null;
 		let lastEventDispatchedTag = null;
-		const validEventTypes = {
+		let validEventTypes = {
 			mouse: ['click', 'mouseup', 'mousedown', 'mousemove'],
 			keyboard: ['keydown', 'keyup', 'keypress']
 		};
@@ -13,7 +13,7 @@
 			const sourceEventType = eventType(sourceEvent.type);
 
 			if(typeof sourceEventType == 'string' && typeof sourceEvent.targetPath == 'string') { // Event will be triggered
-				const eventTarget = document.querySelector(sourceEvent.targetPath);
+				let eventTarget = document.querySelector(sourceEvent.targetPath);
 
 				let generatedEvent = {
 					bubbles: true,
@@ -27,7 +27,7 @@
 				if(typeof sourceEvent.clientPercentageY != 'undefined')
 					generatedEvent.clientY = sourceEvent.clientPercentageY * window.innerHeight;
 
-				generatedEvent = objectMerge(sourceEvent, generatedEvent);
+				generatedEvent = Object.assign({}, sourceEvent, generatedEvent);
 
 				let event;
 				switch(sourceEventType) {
@@ -39,7 +39,6 @@
 						break;
 					default:
 						return;
-						break;
 				}
 
 				lastEventDispatchedTag = messageEvent.data.tag; // Get tags passed through
@@ -50,7 +49,7 @@
 		});
 
 		// Override event listener
-		const defaultAddEventListener = EventTarget.prototype.addEventListener;
+		let defaultAddEventListener = EventTarget.prototype.addEventListener;
 		EventTarget.prototype.addEventListener = function(eventName, eventHandler) {
 
 			if(validEventName(eventName)) { // capture this event
@@ -71,9 +70,8 @@
 				let postEvent = {};
 
 				for(let property in event) {
-					if(event.hasOwnProperty(property) && ['boolean', 'number', 'string'].indexOf(typeof event[property]) >= 0) {
+					if(['boolean', 'number', 'string'].indexOf(typeof event[property]) >= 0)
 						postEvent[property] = event[property];
-					}
 				}
 
 				// Add X, Y percentages for use when mirroing events to differently-sized element
@@ -103,7 +101,7 @@
 		}
 
 		function getDomPath(element) {
-			if (!element)
+			if(!element)
 				return;
 			let stack = [];
 			let isShadow = false;
@@ -111,16 +109,16 @@
 				let sibCount = 0;
 				let sibIndex = 0;
 				// get sibling indexes
-				for (let i = 0; i < element.parentNode.childNodes.length; i++ ) {
-					let sib = element.parentNode.childNodes[i];
-					if (sib.nodeName === element.nodeName ) {
+				for(let i = 0; i < element.parentNode.childNodes.length; i++ ) {
+					var sib = element.parentNode.childNodes[i];
+					if(sib.nodeName === element.nodeName ) {
 						if (sib === element )
 							sibIndex = sibCount;
 						sibCount++;
 					}
 				}
 				let nodeName = element.nodeName.toLowerCase();
-				if (isShadow) {
+				if(isShadow) {
 					nodeName += "::shadow";
 					isShadow = false;
 				}
@@ -136,26 +134,6 @@
 			}
 			stack.splice(0, 1); // removes the html element
 			return stack.join(' > ');
-		}
-
-		function objectMerge() {
-			let merged = {};
-			objectForEach(arguments, function(argument) {
-				for (let attrname in argument) {
-					if(argument.hasOwnProperty(attrname))
-						merged[attrname] = argument[attrname];
-				}
-			});
-			return merged;
-		}
-
-		function objectForEach (object, callback) {
-			// run function on each property (child) of object
-			let property;
-			for(property in object) { // pull keys before looping through?
-				if (object.hasOwnProperty(property))
-					callback(object[property], property, object);
-			}
 		}
 	}
 })();

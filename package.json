@@ -1,15 +1,11 @@
 {
   "name": "mirror-iframe",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "A web component that emits interactions with an iframe",
   "private": true,
   "author": {
     "name": "John Murphy-Teixidor",
     "email": "johnvmt@gmail.com"
-  },
-  "devDependencies": {
-  },
-  "dependencies": {
   },
   "repository": {
     "type": "git",

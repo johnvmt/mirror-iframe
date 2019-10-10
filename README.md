@@ -3,14 +3,14 @@ A web component that emits interactions with an iframe
 
 ## Usage ##
 
-	You must include mirrorevents.js in the page whose evnts you want to mirror
+	You must include MirrorEvents.js in the page whose evnts you want to mirror
 
 	<!DOCTYPE html>
 	<html>
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 	
-		<script type="module" src="mirror-iframe.js"></script>
+		<script type="module" src="MirrorIframe.js"></script>
 	
 	</head>
 	<body>
